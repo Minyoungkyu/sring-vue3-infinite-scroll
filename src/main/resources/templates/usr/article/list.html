@@ -1,0 +1,60 @@
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+<div class="article-list-vue-app">
+    <h1>Article List</h1>
+    <table>
+        <thead>
+        <tr>
+            <th>Id</th>
+            <th>Title</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-for="article in articles" :key="article.id">
+            <td>{{ article.id }}</td>
+            <td>{{ article.title }}</td>
+        </tr>
+        </tbody>
+    </table>
+    <div>
+        <button @click="loadMore">더 보기</button>
+    </div>
+</div>
+
+<script>
+    const fetchArticles = (lastId) => fetch(`listMore?lastId=${lastId}`).then(response => response.json());
+
+    const showAlertOnLastPage = rs => {
+        if (rs.resultCode === 'S-2') {
+            alert("마지막 페이지입니다.");
+            throw new Error("End of pages");
+        }
+        return rs;
+    };
+
+    const app = Vue.createApp({
+        setup() {
+            const articles = Vue.ref([]);
+            const lastId = Vue.ref(0);
+
+            const loadMore = async () => {
+                try {
+                    const rs = await fetchArticles(lastId.value);
+                    showAlertOnLastPage(rs);
+                    articles.value.push(...rs.data);
+                    lastId.value = rs.lastId;
+                } catch (error) {
+                    // Handle error if needed
+                    console.error(error);
+                }
+            };
+
+            Vue.onMounted(loadMore);
+
+            return {
+                articles,
+                loadMore
+            };
+        }
+    }).mount(".article-list-vue-app");
+</script>
